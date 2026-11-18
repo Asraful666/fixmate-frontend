@@ -12,6 +12,11 @@ import clientPromise, { dbName } from "./mongodb";
 const client = await clientPromise;
 const database = client.db(dbName);
 
+// Google OAuth Credentials
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+// BetterAuth Configuration
 export const auth = betterAuth({
   appName: "FixMate",
 
@@ -25,12 +30,26 @@ export const auth = betterAuth({
 
   database: mongodbAdapter(database),
 
+  // Email and Password Authentication
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
     maxPasswordLength: 128,
   },
 
+  // Google OAuth Configuration
+  socialProviders:
+    googleClientId && googleClientSecret
+      ? {
+          google: {
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
+            prompt: "select_account",
+          },
+        }
+      : {},
+
+  // User Configuration
   user: {
     modelName: "users",
 
@@ -59,14 +78,15 @@ export const auth = betterAuth({
     },
   },
 
+  // Authentication Security Hooks
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
 
-      // Registration security
+      // Validate public email registration
       if (ctx.path === "/sign-up/email") {
         const { role, password } = ctx.body || {};
 
-        // Server-side password validation
+        // Password validation
         if (
           typeof password !== "string" ||
           password.length < 6 ||
@@ -79,7 +99,7 @@ export const auth = betterAuth({
           });
         }
 
-        // Allow only customer and technician
+        // Only customer and technician can register publicly
         const allowedRoles = [
           "customer",
           "technician",
@@ -100,7 +120,7 @@ export const auth = betterAuth({
         };
       }
 
-      // Prevent public role modification
+      // Prevent users from changing their own role
       if (
         ctx.path === "/update-user" &&
         ctx.body &&
@@ -118,6 +138,7 @@ export const auth = betterAuth({
     }),
   },
 
+  // BetterAuth Plugins
   plugins: [
     jwt(),
   ],

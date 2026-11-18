@@ -74,7 +74,7 @@ export default function SignUpPage() {
     setImagePreview(URL.createObjectURL(file));
   };
 
-  // Complete registration
+  // Email registration
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -112,7 +112,6 @@ export default function SignUpPage() {
         });
 
         const formData = new FormData();
-
         formData.append("image", profilePicture);
 
         const uploadResponse = await fetch(
@@ -139,7 +138,7 @@ export default function SignUpPage() {
         }
       }
 
-      // STEP 2: Create account using BetterAuth
+      // STEP 2: BetterAuth registration
       toast.loading("Creating your account...", {
         id: "registration",
       });
@@ -167,12 +166,11 @@ export default function SignUpPage() {
         throw new Error("Registration was unsuccessful.");
       }
 
-      // STEP 3: Registration successful
       toast.success("Account created successfully!", {
         id: "registration",
       });
 
-      // STEP 4: Redirect according to role
+      // STEP 3: Role-based redirect
       const dashboard =
         role === "technician"
           ? "/dashboard/technician"
@@ -190,6 +188,29 @@ export default function SignUpPage() {
       );
 
     } finally {
+      setLoading(false);
+    }
+  };
+
+  // GOOGLE LOGIN
+  const handleGoogleLogin = async () => {
+    if (loading) return;
+
+    try {
+      setLoading(true);
+
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard/customer",
+      });
+
+    } catch (error) {
+      console.error("Google Login Error:", error);
+
+      toast.error(
+        error.message || "Google login failed."
+      );
+
       setLoading(false);
     }
   };
@@ -300,9 +321,7 @@ export default function SignUpPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="text-3xl">
-                        👤
-                      </span>
+                      <span className="text-3xl">👤</span>
                     )}
 
                   </div>
@@ -521,18 +540,18 @@ export default function SignUpPage() {
 
             <button
               type="button"
-              disabled
-              className="flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-500 opacity-70"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <span className="font-bold text-lg">
+
+              <span className="text-lg font-bold text-blue-600">
                 G
               </span>
 
-              Continue with Google
-
-              <span className="text-xs">
-                (Setup pending)
-              </span>
+              {loading
+                ? "Connecting to Google..."
+                : "Continue with Google"}
 
             </button>
 
