@@ -2,7 +2,10 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { jwt } from "better-auth/plugins";
-import { createAuthMiddleware } from "better-auth/api";
+import {
+  createAuthMiddleware,
+  APIError,
+} from "better-auth/api";
 
 import clientPromise, { dbName } from "./mongodb";
 
@@ -59,17 +62,31 @@ export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
 
-      // Validate public email registration role
+      // Registration security
       if (ctx.path === "/sign-up/email") {
-        const requestedRole = ctx.body?.role;
+        const { role, password } = ctx.body || {};
 
+        // Server-side password validation
+        if (
+          typeof password !== "string" ||
+          password.length < 6 ||
+          !/[A-Z]/.test(password) ||
+          !/[a-z]/.test(password)
+        ) {
+          throw new APIError("BAD_REQUEST", {
+            message:
+              "Password must contain at least 6 characters, one uppercase and one lowercase letter.",
+          });
+        }
+
+        // Allow only customer and technician
         const allowedRoles = [
           "customer",
           "technician",
         ];
 
-        const safeRole = allowedRoles.includes(requestedRole)
-          ? requestedRole
+        const safeRole = allowedRoles.includes(role)
+          ? role
           : "customer";
 
         return {
@@ -83,7 +100,7 @@ export const auth = betterAuth({
         };
       }
 
-      // Prevent changing role through profile update
+      // Prevent public role modification
       if (
         ctx.path === "/update-user" &&
         ctx.body &&
