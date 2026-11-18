@@ -2,6 +2,7 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { jwt } from "better-auth/plugins";
+import { createAuthMiddleware } from "better-auth/api";
 
 import clientPromise, { dbName } from "./mongodb";
 
@@ -24,6 +25,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     minPasswordLength: 6,
+    maxPasswordLength: 128,
   },
 
   user: {
@@ -34,7 +36,7 @@ export const auth = betterAuth({
         type: "string",
         required: false,
         defaultValue: "customer",
-        input: false,
+        input: true,
       },
 
       phone: {
@@ -52,6 +54,51 @@ export const auth = betterAuth({
         required: false,
       },
     },
+  },
+
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+
+      // Validate public email registration role
+      if (ctx.path === "/sign-up/email") {
+        const requestedRole = ctx.body?.role;
+
+        const allowedRoles = [
+          "customer",
+          "technician",
+        ];
+
+        const safeRole = allowedRoles.includes(requestedRole)
+          ? requestedRole
+          : "customer";
+
+        return {
+          context: {
+            ...ctx,
+            body: {
+              ...ctx.body,
+              role: safeRole,
+            },
+          },
+        };
+      }
+
+      // Prevent changing role through profile update
+      if (
+        ctx.path === "/update-user" &&
+        ctx.body &&
+        Object.prototype.hasOwnProperty.call(ctx.body, "role")
+      ) {
+        const { role, ...safeBody } = ctx.body;
+
+        return {
+          context: {
+            ...ctx,
+            body: safeBody,
+          },
+        };
+      }
+    }),
   },
 
   plugins: [
