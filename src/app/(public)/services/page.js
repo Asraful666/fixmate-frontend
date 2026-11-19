@@ -342,7 +342,7 @@ function ServicesContent() {
 
                 <article
                   key={service._id}
-                  className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
 
                   {/* SERVICE IMAGE */}
@@ -368,7 +368,7 @@ function ServicesContent() {
                   </div>
 
                   {/* CARD CONTENT */}
-                  <div className="p-6">
+                  <div className="flex flex-1 flex-col p-6">
 
                     <div className="flex items-start justify-between gap-3">
 
@@ -443,7 +443,7 @@ function ServicesContent() {
                     </div>
 
                     {/* PRICE AND BUTTON */}
-                    <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
+                    <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-5">
 
                       <div>
                         <p className="text-xs text-slate-400">

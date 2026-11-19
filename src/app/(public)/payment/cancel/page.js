@@ -23,10 +23,10 @@ export default function PaymentCancelPage() {
 
         <div className="mt-7 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/dashboard/customer"
+            href="/dashboard/customer/bookings"
             className="flex-1 rounded-xl bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800"
           >
-            Back to My Bookings
+            Try Again
           </Link>
           <Link
             href="/services"

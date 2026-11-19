@@ -84,7 +84,7 @@ function PaymentSuccessContent() {
               {displayError}
             </p>
             <Link
-              href="/dashboard/customer"
+              href="/dashboard/customer/bookings"
               className="mt-6 inline-block rounded-xl bg-blue-700 px-6 py-3 font-bold text-white hover:bg-blue-800"
             >
               Back to My Bookings
@@ -129,13 +129,13 @@ function PaymentSuccessContent() {
                   <div>
                     <p className="text-xs text-slate-400">Service date</p>
                     <p className="font-semibold text-slate-800">
-                      {formatDate(booking.bookingDate)}
+                      {formatDate(booking.preferredDate)}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-400">Amount</p>
                     <p className="font-semibold text-slate-800">
-                      {formatCurrency(payment?.amount ?? booking.price)}
+                      {formatCurrency(payment?.amount ?? booking.finalAmount)}
                     </p>
                   </div>
                   <div>
@@ -150,7 +150,7 @@ function PaymentSuccessContent() {
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/dashboard/customer"
+                href="/dashboard/customer/bookings"
                 className="flex-1 rounded-xl bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800"
               >
                 My Bookings

@@ -113,21 +113,25 @@ export default function Footer() {
               <span className="mb-1 block font-semibold text-white">
                 Email
               </span>
-              Contact email will be configured.
+              <a href="mailto:support@fixmate.app" className="hover:text-blue-400">
+                support@fixmate.app
+              </a>
             </li>
 
             <li>
               <span className="mb-1 block font-semibold text-white">
                 Phone
               </span>
-              Contact number will be configured.
+              <a href="tel:+8801700000000" className="hover:text-blue-400">
+                +880 1700-000000
+              </a>
             </li>
 
             <li>
               <span className="mb-1 block font-semibold text-white">
                 Address
               </span>
-              Business address will be configured.
+              House 12, Road 4, Dhanmondi, Dhaka 1205, Bangladesh
             </li>
 
           </ul>
@@ -147,7 +151,7 @@ export default function Footer() {
 </p>
 
 
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center justify-center gap-5">
 
             <Link href="/" className="hover:text-white">
               Home
@@ -160,6 +164,42 @@ export default function Footer() {
             <Link href="/about" className="hover:text-white">
               About
             </Link>
+
+            <span className="hidden h-4 w-px bg-slate-700 sm:block" />
+
+            <a
+              href="https://x.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="FixMate on X"
+              className="rounded-lg border border-slate-700 p-2 text-slate-400 transition hover:border-slate-500 hover:text-white"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+            </a>
+
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="FixMate on Facebook"
+              className="rounded-lg border border-slate-700 p-2 text-slate-400 transition hover:border-slate-500 hover:text-white"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z" />
+              </svg>
+            </a>
 
           </div>
 

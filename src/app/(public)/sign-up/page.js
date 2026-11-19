@@ -5,10 +5,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
+import { dashboardForRole } from "@/lib/format";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { data: session, isPending } = useSession();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,6 +31,13 @@ export default function SignUpPage() {
       }
     };
   }, [imagePreview]);
+
+  // Logged-in users never see the sign-up form.
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      router.replace(dashboardForRole(session.user.role));
+    }
+  }, [isPending, session, router]);
 
   // Password validation
   const passwordChecks = {

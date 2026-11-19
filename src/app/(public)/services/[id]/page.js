@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -21,7 +21,6 @@ const todayInputValue = () => {
 
 export default function ServiceDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const { data: session } = useSession();
   const id = params.id;
 
@@ -31,12 +30,14 @@ export default function ServiceDetailsPage() {
   const [error, setError] = useState("");
 
   const [bookingForm, setBookingForm] = useState({
-    bookingDate: "",
+    preferredDate: "",
     address: "",
     phone: "",
-    note: "",
+    problemDescription: "",
   });
   const [booking, setBooking] = useState(false);
+  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
 
   const user = session?.user;
   const isCustomer = user?.role === "customer";
@@ -93,12 +94,12 @@ export default function ServiceDetailsPage() {
     const timer = setTimeout(() => {
       setBookingForm((current) => {
         const nextPhone = current.phone || user.phone || "";
-        const nextDate = current.bookingDate || todayInputValue();
+        const nextDate = current.preferredDate || todayInputValue();
         const nextAddress = current.address || user.area || "";
 
         if (
           nextPhone === current.phone &&
-          nextDate === current.bookingDate &&
+          nextDate === current.preferredDate &&
           nextAddress === current.address
         ) {
           return current;
@@ -107,7 +108,7 @@ export default function ServiceDetailsPage() {
         return {
           ...current,
           phone: nextPhone,
-          bookingDate: nextDate,
+          preferredDate: nextDate,
           address: nextAddress,
         };
       });
@@ -127,8 +128,17 @@ export default function ServiceDetailsPage() {
 
     if (booking) return;
 
-    if (!bookingForm.bookingDate || !bookingForm.address.trim() || !bookingForm.phone.trim()) {
+    if (
+      !bookingForm.preferredDate ||
+      !bookingForm.address.trim() ||
+      !bookingForm.phone.trim()
+    ) {
       toast.error("Date, address and phone are required.");
+      return;
+    }
+
+    if (bookingForm.problemDescription.trim().length < 20) {
+      toast.error("Problem description must be at least 20 characters.");
       return;
     }
 
@@ -139,15 +149,16 @@ export default function ServiceDetailsPage() {
         method: "POST",
         body: {
           serviceId: service._id,
-          bookingDate: bookingForm.bookingDate,
+          preferredDate: bookingForm.preferredDate,
           address: bookingForm.address.trim(),
           phone: bookingForm.phone.trim(),
-          note: bookingForm.note.trim(),
+          problemDescription: bookingForm.problemDescription.trim(),
         },
       });
 
-      toast.success("Booking request sent to the technician.");
-      router.push("/dashboard/customer");
+      toast.success("Repair request sent to the technician.");
+      setRequestSent(true);
+      setShowRequestForm(false);
     } catch (err) {
       toast.error(err.message || "Unable to send the booking request.");
     } finally {
@@ -396,88 +407,160 @@ export default function ServiceDetailsPage() {
                   href={`/sign-in?callbackURL=${encodeURIComponent(`/services/${id}`)}`}
                   className="mt-8 block w-full rounded-xl bg-blue-700 px-5 py-4 text-center font-bold text-white transition hover:bg-blue-800"
                 >
-                  Sign In to Book →
+                  Request Repair →
                 </Link>
 
                 <p className="mt-4 text-center text-xs leading-6 text-slate-400">
-                  Sign in as a customer to send a booking request.
+                  Sign in as a customer to send a repair request.
                 </p>
               </>
             ) : isCustomer ? (
-              <form onSubmit={handleBooking} className="mt-8 space-y-4">
-                <p className="font-bold text-slate-900">Request This Service</p>
+              requestSent ? (
+                <div className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+                  <p className="text-3xl">✅</p>
+                  <p className="mt-2 font-bold text-emerald-900">
+                    Request sent successfully!
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-emerald-800">
+                    Your request is now <strong>Requested</strong>. The
+                    technician will review it shortly.
+                  </p>
+                  <Link
+                    href="/dashboard/customer/bookings"
+                    className="mt-4 inline-block rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700"
+                  >
+                    Go to My Bookings →
+                  </Link>
+                </div>
+              ) : !showRequestForm ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowRequestForm(true)}
+                    className="mt-8 w-full rounded-xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800"
+                  >
+                    Request Repair →
+                  </button>
 
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-slate-600">
-                    Preferred Date
-                  </span>
-                  <input
-                    type="date"
-                    min={todayInputValue()}
-                    value={bookingForm.bookingDate}
-                    onChange={updateBookingField("bookingDate")}
-                    required
-                    className="input-base"
-                  />
-                </label>
+                  <p className="mt-4 text-center text-xs leading-6 text-slate-400">
+                    Sending a request is free. You pay only after the job is
+                    completed.
+                  </p>
+                </>
+              ) : (
+                <form onSubmit={handleBooking} className="mt-8 space-y-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-bold text-slate-900">
+                      Request This Service
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowRequestForm(false)}
+                      className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+                    >
+                      Close
+                    </button>
+                  </div>
 
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-slate-600">
-                    Contact Phone
-                  </span>
-                  <input
-                    value={bookingForm.phone}
-                    onChange={updateBookingField("phone")}
-                    placeholder="+8801XXXXXXXXX"
-                    required
-                    className="input-base"
-                  />
-                </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-slate-600">
+                      Name (read only)
+                    </span>
+                    <input
+                      value={user.name || ""}
+                      readOnly
+                      className="input-base bg-slate-50 text-slate-500"
+                    />
+                  </label>
 
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-slate-600">
-                    Service Address
-                  </span>
-                  <textarea
-                    value={bookingForm.address}
-                    onChange={updateBookingField("address")}
-                    rows={3}
-                    placeholder="House, road, area"
-                    required
-                    className="input-base resize-y"
-                  />
-                </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-slate-600">
+                      Email (read only)
+                    </span>
+                    <input
+                      value={user.email || ""}
+                      readOnly
+                      className="input-base bg-slate-50 text-slate-500"
+                    />
+                  </label>
 
-                <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-slate-600">
-                    Problem Details (optional)
-                  </span>
-                  <textarea
-                    value={bookingForm.note}
-                    onChange={updateBookingField("note")}
-                    rows={2}
-                    placeholder="Tell the technician what is wrong."
-                    className="input-base resize-y"
-                  />
-                </label>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-slate-600">
+                      Phone
+                    </span>
+                    <input
+                      value={bookingForm.phone}
+                      onChange={updateBookingField("phone")}
+                      placeholder="+8801XXXXXXXXX"
+                      required
+                      className="input-base"
+                    />
+                  </label>
 
-                <button
-                  type="submit"
-                  disabled={booking}
-                  className="w-full rounded-xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
-                >
-                  {booking ? "Sending Request..." : "Send Booking Request"}
-                </button>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-slate-600">
+                      Address
+                    </span>
+                    <textarea
+                      value={bookingForm.address}
+                      onChange={updateBookingField("address")}
+                      rows={3}
+                      placeholder="House, road, area"
+                      required
+                      className="input-base resize-y"
+                    />
+                  </label>
 
-                <p className="text-center text-xs leading-6 text-slate-400">
-                  You will not be charged until the job is completed.
-                </p>
-              </form>
+                  <label className="block">
+                    <span className="mb-1 block text-xs font-semibold text-slate-600">
+                      Preferred Date
+                    </span>
+                    <input
+                      type="date"
+                      min={todayInputValue()}
+                      value={bookingForm.preferredDate}
+                      onChange={updateBookingField("preferredDate")}
+                      required
+                      className="input-base"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1 flex items-center justify-between text-xs font-semibold text-slate-600">
+                      <span>Problem Description</span>
+                      <span className="text-slate-400">
+                        {bookingForm.problemDescription.trim().length}/20
+                      </span>
+                    </span>
+                    <textarea
+                      value={bookingForm.problemDescription}
+                      onChange={updateBookingField("problemDescription")}
+                      rows={3}
+                      minLength={20}
+                      placeholder="Describe the problem in at least 20 characters."
+                      required
+                      className="input-base resize-y"
+                    />
+                  </label>
+
+                  <button
+                    type="submit"
+                    disabled={booking}
+                    className="w-full rounded-xl bg-blue-700 px-5 py-4 font-bold text-white transition hover:bg-blue-800 disabled:opacity-50"
+                  >
+                    {booking ? "Sending Request..." : "Send Repair Request"}
+                  </button>
+
+                  <p className="text-center text-xs leading-6 text-slate-400">
+                    You will not be charged until the job is completed.
+                  </p>
+                </form>
+              )
             ) : (
               <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
                 {user.role === "technician"
-                  ? "You are signed in as a technician. Only customer accounts can book services."
-                  : "You are signed in as an admin. Only customer accounts can book services."}
+                  ? "Only customers can request a repair. You are signed in as a technician."
+                  : "Only customers can request a repair. You are signed in as an admin."}
               </div>
             )}
 

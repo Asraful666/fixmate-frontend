@@ -28,7 +28,7 @@ export default function FeaturedServices() {
           throw new Error(result.message || "Unable to load services.");
         }
 
-        setServices((result.services || []).slice(0, 3));
+        setServices((result.services || []).slice(0, 6));
       } catch (err) {
         if (err.name !== "AbortError") {
           setError(err.message || "Unable to load featured services.");
@@ -47,11 +47,11 @@ export default function FeaturedServices() {
 
   if (loading) {
     return (
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-        {[1, 2, 3].map((item) => (
+      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3, 4, 5, 6].map((item) => (
           <div
             key={item}
-            className="h-80 animate-pulse rounded-2xl bg-slate-200"
+            className="h-96 animate-pulse rounded-2xl bg-slate-200"
           />
         ))}
       </div>
@@ -65,7 +65,9 @@ export default function FeaturedServices() {
           🔧
         </div>
         <h3 className="mt-5 text-xl font-bold text-slate-900">
-          {error ? "Services are temporarily unavailable" : "Approved services are coming soon"}
+          {error
+            ? "Services are temporarily unavailable"
+            : "Approved services are coming soon"}
         </h3>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
           {error
@@ -83,13 +85,13 @@ export default function FeaturedServices() {
   }
 
   return (
-    <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+    <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {services.map((service) => (
         <article
           key={service._id}
-          className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+          className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
         >
-          <div className="h-44 overflow-hidden bg-slate-100">
+          <div className="h-44 shrink-0 overflow-hidden bg-slate-100">
             {service.image ? (
               <img
                 src={service.image}
@@ -103,18 +105,32 @@ export default function FeaturedServices() {
             )}
           </div>
 
-          <div className="p-5">
-            <p className="text-xs font-bold uppercase tracking-wider text-blue-700">
-              {service.category}
-            </p>
+          <div className="flex flex-1 flex-col p-5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-wider text-blue-700">
+                {service.category}
+              </p>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                {service.serviceMode}
+              </span>
+            </div>
+
             <h3 className="mt-2 line-clamp-1 text-lg font-bold text-slate-900">
               {service.title}
             </h3>
-            <p className="mt-2 line-clamp-2 min-h-10 text-sm text-slate-500">
+
+            <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-6 text-slate-500">
               {service.description}
             </p>
 
-            <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+            <p className="mt-3 text-xs text-slate-500">
+              Technician:{" "}
+              <span className="font-semibold text-slate-700">
+                {service.technicianName || "FixMate Pro"}
+              </span>
+            </p>
+
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
               <div>
                 <p className="text-xs text-slate-400">Starting at</p>
                 <p className="text-xl font-extrabold text-blue-700">
@@ -126,7 +142,7 @@ export default function FeaturedServices() {
                 href={`/services/${service._id}`}
                 className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
               >
-                View
+                View Details
               </Link>
             </div>
           </div>

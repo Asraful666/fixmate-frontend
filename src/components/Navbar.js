@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient, signOut, useSession } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -44,11 +45,12 @@ export default function Navbar() {
       setProfileOpen(false);
       setMobileOpen(false);
 
+      toast.success("Signed out.");
       router.replace("/");
       router.refresh();
     } catch (error) {
       console.error("Sign out error:", error);
-      alert(error.message || "Unable to sign out.");
+      toast.error(error.message || "Unable to sign out.");
     } finally {
       setSigningOut(false);
     }

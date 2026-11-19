@@ -1,12 +1,12 @@
 
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import { authClient } from "@/lib/auth-client";
+import { authClient, useSession } from "@/lib/auth-client";
 import { dashboardForRole } from "@/lib/format";
 
 export default function SignInPage() {
@@ -20,6 +20,7 @@ export default function SignInPage() {
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, isPending } = useSession();
 
   const requestedCallback = searchParams.get("callbackURL");
   const callbackURL =
@@ -28,6 +29,13 @@ function SignInContent() {
     !requestedCallback.startsWith("//")
       ? requestedCallback
       : "";
+
+  // Logged-in users never see the sign-in form.
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      router.replace(callbackURL || dashboardForRole(session.user.role));
+    }
+  }, [isPending, session, router, callbackURL]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
