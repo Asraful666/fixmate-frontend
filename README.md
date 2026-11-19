@@ -1,8 +1,64 @@
-# FixMate Frontend
+# FixMate — Smart Device & Home Appliance Repair Service Platform
 
-Next.js 16 App Router frontend for FixMate, a home repair service marketplace.
-The app uses BetterAuth (email/password + optional Google), JWT-protected
-Express API calls, ImgBB uploads and Stripe Checkout.
+FixMate is a full-stack, role-based repair service booking platform. Customers
+browse approved services, send repair requests, track each job and pay online
+only after the technician completes the work. Technicians publish and manage
+services and move each job through a status pipeline. Admins approve services,
+manage users and review bookings and Stripe transactions.
+
+## Live Site
+
+- Frontend: `https://fixmate-frontend.vercel.app` **(replace with your deployed URL)**
+- Backend API: `https://fixmate-api.onrender.com/api` **(replace with your deployed URL)**
+- Local frontend: `http://localhost:3000`
+- Local API: `http://localhost:5000`
+
+> The live URL above is a placeholder. Deploy both apps and replace it before
+> submitting the assignment.
+
+## Admin Credentials
+
+| Email | Password | Role |
+|---|---|---|
+| `admin@fixmate.test` | `Demo@1234` | Admin |
+
+Other seeded accounts (same password): `customer@fixmate.test` (customer),
+`rahim@fixmate.test` and `karim@fixmate.test` (technicians).
+
+## Key Features
+
+- BetterAuth email/password auth with customer / technician roles, JWT bridge
+  to Express, Google login option, and role-protected dashboard routes.
+- Landing page with 6 latest approved services, 4-step "How FixMate Works",
+  popular categories and trust points.
+- Browse services with server-side search, category/mode filters and sorting,
+  all persisted in the URL.
+- Service details with technician profile and a role-restricted repair request
+  form (read-only name/email, phone, address, preferred date, 20+ character
+  problem description, duplicate-request protection).
+- Customer dashboard: overview stats and chart, My Bookings with cancel
+  confirmation (requested only) and Stripe Pay Now (completed + unpaid),
+  payment history.
+- Technician dashboard: overview stats and chart, add service with ImgBB image
+  upload, full service CRUD with availability toggle, request pipeline
+  (Accept / Reject / Start Work / Mark Completed with final amount modal).
+- Admin dashboard: overview stats and charts, user role management, service
+  approval, read-only bookings, transactions with total revenue.
+- Shared profile page with photo upload; name/photo update in the top bar
+  without re-login.
+- Stripe Checkout in test mode with idempotent payment recording and a verified
+  webhook. Payment is gated to completed, unpaid bookings.
+- Responsive dashboard with collapsible sidebar, top bar avatar/name/role,
+  consistent status badge colours, toasts, confirmation modals, empty states,
+  loading skeletons, custom 404 and error pages.
+
+## npm Packages Used
+
+- `next`, `react`, `react-dom`
+- `better-auth`, `@better-auth/mongo-adapter`, `mongodb`, `jose`
+- `sonner` (toasts)
+- `tailwindcss`, `@tailwindcss/turbopack` (styling)
+- `eslint`, `eslint-config-next` (linting)
 
 ## Tech Stack
 
@@ -58,18 +114,27 @@ Create `.env.local` from `.env.local.example`:
 
 | Route | Description |
 |---|---|
-| `/` | Landing page with featured approved services |
-| `/services` | Search, category/mode filters, sorting; filters sync to the URL |
-| `/services/[id]` | Service details, technician bio, booking request form |
+| `/` | Landing page with 6 latest approved services and how-it-works sections |
+| `/services` | Server-side search, category/mode filters and sorting; filters sync to the URL |
+| `/services/[id]` | Service details, technician profile, repair request form |
 | `/about` | How FixMate works |
-| `/sign-in`, `/sign-up` | BetterAuth email/password and Google entry points |
+| `/sign-in`, `/sign-up` | BetterAuth email/password and Google entry points (logged-in users redirect to their dashboard) |
 | `/dashboard` | Redirects to the dashboard for the signed-in role |
-| `/dashboard/customer` | Own bookings, cancel, Stripe payment after completion |
-| `/dashboard/technician` | Service CRUD, availability, booking status pipeline |
-| `/dashboard/admin` | Stats, service approvals, user roles, bookings, payments |
-| `/dashboard/profile` | Name, phone, area, bio and avatar management |
+| `/dashboard/customer` | Overview stats, chart and recent requests |
+| `/dashboard/customer/bookings` | My Bookings: cancel requested jobs, pay completed jobs |
+| `/dashboard/customer/payments` | Payment history (service, technician, amount, transaction, date) |
+| `/dashboard/technician` | Overview stats, chart and latest requests |
+| `/dashboard/technician/add-service` | Validated add-service form with ImgBB upload |
+| `/dashboard/technician/my-services` | Service CRUD, approval badges and availability toggle |
+| `/dashboard/technician/requests` | Request pipeline with Accept / Reject / Start / Complete |
+| `/dashboard/admin` | Overview stats and charts |
+| `/dashboard/admin/users` | User list with role management |
+| `/dashboard/admin/services` | Service approval (pending first by default) |
+| `/dashboard/admin/bookings` | Read-only booking table with status filter |
+| `/dashboard/admin/transactions` | Payment table with total revenue |
+| `/dashboard/profile` | Name, phone, area, bio and avatar management (all roles) |
 | `/payment/success` | Verifies the Stripe session and shows the receipt |
-| `/payment/cancel` | Safe return page when Stripe checkout is cancelled |
+| `/payment/cancel` | Safe return page with a Try Again button |
 
 ## Demo Accounts
 
