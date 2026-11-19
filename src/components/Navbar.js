@@ -20,6 +20,12 @@ function getDashboard(role) {
   return "/dashboard/customer";
 }
 
+// Highlight the route itself and any nested page under it.
+const isActiveRoute = (pathname, href) =>
+  href === "/"
+    ? pathname === "/"
+    : pathname === href || pathname.startsWith(`${href}/`);
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -84,7 +90,7 @@ export default function Navbar() {
         {/* DESKTOP NAVIGATION */}
         <div className="hidden items-center gap-8 md:flex">
           {navigation.map((item) => {
-            const active = pathname === item.href;
+            const active = isActiveRoute(pathname, item.href);
 
             return (
               <Link
@@ -240,7 +246,7 @@ export default function Navbar() {
                 href={item.href}
                 onClick={closeMenus}
                 className={`rounded-lg px-4 py-3 text-sm font-semibold ${
-                  pathname === item.href
+                  isActiveRoute(pathname, item.href)
                     ? "bg-blue-50 text-blue-700"
                     : "text-slate-700 hover:bg-slate-50"
                 }`}
