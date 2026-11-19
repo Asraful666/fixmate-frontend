@@ -14,7 +14,12 @@ manage users and review bookings and Stripe transactions.
 - Local API: `http://localhost:5000`
 
 > The live URL above is a placeholder. Deploy both apps and replace it before
-> submitting the assignment.
+> submitting the assignment. The code is already pushed to GitHub.
+
+## Repositories
+
+- Frontend: https://github.com/Asraful666/fixmate-frontend
+- Backend: https://github.com/Asraful666/fixmate-backend
 
 ## Admin Credentials
 
