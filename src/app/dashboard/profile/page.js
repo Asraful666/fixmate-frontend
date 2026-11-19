@@ -113,7 +113,7 @@ export default function ProfilePage() {
     try {
       setSaving(true);
 
-      const result = await apiFetch("/users/me", {
+      const result = await apiFetch("/users/profile", {
         method: "PATCH",
         body: {
           name: form.name.trim(),

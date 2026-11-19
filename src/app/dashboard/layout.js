@@ -1,22 +1,35 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import { useSession } from "@/lib/auth-client";
+import { dashboardForRole, roleForPath } from "@/lib/format";
 
 export default function DashboardLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session, isPending } = useSession();
 
+  const user = session?.user;
+  const role = user?.role || "customer";
+  const requiredRole = roleForPath(pathname);
+  const forbidden = Boolean(user && requiredRole && requiredRole !== role);
+
   useEffect(() => {
-    if (!isPending && !session?.user) {
+    if (!isPending && !user) {
       router.replace(
-        `/sign-in?callbackURL=${encodeURIComponent("/dashboard")}`
+        `/sign-in?callbackURL=${encodeURIComponent(pathname || "/dashboard")}`
       );
+      return;
     }
-  }, [isPending, session, router]);
+
+    // A logged-in user opening another role's route is sent to their own dashboard.
+    if (forbidden) {
+      router.replace(dashboardForRole(role));
+    }
+  }, [isPending, user, forbidden, role, router, pathname]);
 
   if (isPending) {
     return (
@@ -31,15 +44,17 @@ export default function DashboardLayout({ children }) {
     );
   }
 
-  if (!session?.user) {
+  if (!user || forbidden) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-5">
         <p className="text-center font-semibold text-slate-600">
-          Redirecting to sign in...
+          {forbidden
+            ? "This page belongs to another role. Redirecting to your dashboard..."
+            : "Redirecting to sign in..."}
         </p>
       </div>
     );
   }
 
-  return <DashboardShell user={session.user}>{children}</DashboardShell>;
+  return <DashboardShell user={user}>{children}</DashboardShell>;
 }

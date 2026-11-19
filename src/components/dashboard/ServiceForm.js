@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { apiFetch } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { CATEGORIES, SERVICE_MODES } from "@/lib/constants";
 
 const emptyForm = {
@@ -22,6 +23,8 @@ export default function ServiceForm({
   onSaved,
   onCancel,
 }) {
+  const { data: session } = useSession();
+
   const [form, setForm] = useState(() =>
     initialService
       ? {
@@ -102,11 +105,13 @@ export default function ServiceForm({
       return;
     }
 
-    if (
-      !form.estimatedDuration.trim() ||
-      !form.serviceArea.trim()
-    ) {
+    if (!form.estimatedDuration.trim() || !form.serviceArea.trim()) {
       toast.error("Duration and service area are required.");
+      return;
+    }
+
+    if (!form.image) {
+      toast.error("Please upload a service image.");
       return;
     }
 
@@ -133,7 +138,9 @@ export default function ServiceForm({
 
       toast.success(
         result.message ||
-          (isEditing ? "Service updated." : "Service submitted.")
+          (isEditing
+            ? "Service updated and sent for approval."
+            : "Service submitted. Waiting for admin approval.")
       );
 
       onSaved?.();
@@ -172,7 +179,31 @@ export default function ServiceForm({
         )}
       </div>
 
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2">
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-slate-700">
+            Technician Name (read only)
+          </span>
+          <input
+            value={session?.user?.name || ""}
+            readOnly
+            className="input-base bg-slate-50 text-slate-500"
+          />
+        </label>
+
+        <label className="block">
+          <span className="mb-2 block text-sm font-semibold text-slate-700">
+            Technician Email (read only)
+          </span>
+          <input
+            value={session?.user?.email || ""}
+            readOnly
+            className="input-base bg-slate-50 text-slate-500"
+          />
+        </label>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Service Title">
           <input
             value={form.title}
@@ -184,7 +215,11 @@ export default function ServiceForm({
         </Field>
 
         <Field label="Category">
-          <select value={form.category} onChange={update("category")} className="input-base">
+          <select
+            value={form.category}
+            onChange={update("category")}
+            className="input-base"
+          >
             {CATEGORIES.map((category) => (
               <option key={category} value={category}>
                 {category}
@@ -257,11 +292,11 @@ export default function ServiceForm({
       <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
         <p className="text-sm font-semibold text-slate-700">Service Image</p>
         <p className="mt-1 text-xs text-slate-500">
-          Upload through ImgBB or paste a direct image URL.
+          Upload a JPG, PNG or WEBP image (max 5MB) through ImgBB.
         </p>
 
         <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex h-20 w-28 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+          <div className="flex h-24 w-32 items-center justify-center overflow-hidden rounded-xl bg-slate-100">
             {form.image ? (
               <img
                 src={form.image}
@@ -273,38 +308,33 @@ export default function ServiceForm({
             )}
           </div>
 
-          <div className="flex-1 space-y-2">
-            <input
-              value={form.image}
-              onChange={update("image")}
-              placeholder="https://example.com/image.jpg"
-              className="input-base"
-            />
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="cursor-pointer rounded-lg bg-blue-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-800">
+              {uploading
+                ? "Uploading..."
+                : form.image
+                  ? "Replace Image"
+                  : "Upload Image"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                className="hidden"
+              />
+            </label>
 
-            <div className="flex items-center gap-3">
-              <label className="cursor-pointer rounded-lg border border-blue-600 px-4 py-2 text-xs font-bold text-blue-700 hover:bg-blue-50">
-                {uploading ? "Uploading..." : "Upload Image"}
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handleImageUpload}
-                  disabled={uploading}
-                  className="hidden"
-                />
-              </label>
-
-              {form.image && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setForm((current) => ({ ...current, image: "" }))
-                  }
-                  className="text-xs font-semibold text-red-600 hover:underline"
-                >
-                  Remove image
-                </button>
-              )}
-            </div>
+            {form.image && (
+              <button
+                type="button"
+                onClick={() =>
+                  setForm((current) => ({ ...current, image: "" }))
+                }
+                className="text-xs font-semibold text-red-600 hover:underline"
+              >
+                Remove image
+              </button>
+            )}
           </div>
         </div>
       </div>
