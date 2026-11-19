@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local AI agent instructions - never commit
+agent.md
+Agent.md
+AGENT.md
+agents.md
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.cursorrules
+.cursor/rules/
