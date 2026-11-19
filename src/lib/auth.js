@@ -54,6 +54,18 @@ export const auth = betterAuth({
         }
       : {},
 
+  // Demo reviewers switch between the four seeded accounts quickly, so the
+  // BetterAuth default of 3 sign-in attempts per 10 seconds is too strict.
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 20 },
+      "/sign-up/email": { window: 60, max: 10 },
+    },
+  },
+
   // User Configuration
   user: {
     modelName: "users",
