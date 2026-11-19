@@ -1,14 +1,33 @@
 
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+
 import { authClient } from "@/lib/auth-client";
+import { dashboardForRole } from "@/lib/format";
 
 export default function SignInPage() {
+  return (
+    <Suspense fallback={<SignInFallback />}>
+      <SignInContent />
+    </Suspense>
+  );
+}
+
+function SignInContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const requestedCallback = searchParams.get("callbackURL");
+  const callbackURL =
+    requestedCallback &&
+    requestedCallback.startsWith("/") &&
+    !requestedCallback.startsWith("//")
+      ? requestedCallback
+      : "";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,15 +58,9 @@ export default function SignInPage() {
       toast.success("Welcome back!");
 
       const role = data.user?.role;
+      const destination = callbackURL || dashboardForRole(role);
 
-      if (role === "admin") {
-        router.replace("/dashboard/admin");
-      } else if (role === "technician") {
-        router.replace("/dashboard/technician");
-      } else {
-        router.replace("/dashboard/customer");
-      }
-
+      router.replace(destination);
       router.refresh();
 
     } catch (error) {
@@ -64,7 +77,7 @@ export default function SignInPage() {
 
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard/customer",
+        callbackURL: callbackURL || "/dashboard",
       });
 
       if (error) {
@@ -180,7 +193,7 @@ export default function SignInPage() {
         </button>
 
         <p className="mt-7 text-center text-sm text-slate-600">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/sign-up"
             className="font-bold text-blue-700 hover:underline"
@@ -189,6 +202,17 @@ export default function SignInPage() {
           </Link>
         </p>
 
+      </div>
+    </main>
+  );
+}
+
+function SignInFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+      <div className="w-full max-w-md rounded-3xl bg-white p-10 text-center shadow-xl">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-blue-100 border-t-blue-700" />
+        <p className="mt-5 font-semibold text-slate-600">Loading sign in...</p>
       </div>
     </main>
   );
