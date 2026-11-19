@@ -83,7 +83,13 @@ export default function ServiceForm({
       setForm((current) => ({ ...current, image: result.imageUrl }));
       toast.success("Service image uploaded.");
     } catch (error) {
-      toast.error(error.message || "Unable to upload the image.");
+      const message = error.message || "Unable to upload the image.";
+
+      toast.error(
+        /forbidden|imgbb/i.test(message)
+          ? "ImgBB rejected the API key. Paste an image URL below, or update IMGBB_API_KEY."
+          : message
+      );
     } finally {
       setUploading(false);
       event.target.value = "";
@@ -337,6 +343,22 @@ export default function ServiceForm({
             )}
           </div>
         </div>
+
+        <label className="mt-4 block">
+          <span className="mb-1 block text-xs font-semibold text-slate-500">
+            Or paste an image URL (works even if ImgBB is unavailable)
+          </span>
+
+          <input
+            type="url"
+            value={form.image}
+            onChange={(event) =>
+              setForm((current) => ({ ...current, image: event.target.value }))
+            }
+            placeholder="https://i.ibb.co/your-image.jpg"
+            className="input-base"
+          />
+        </label>
       </div>
 
       <button

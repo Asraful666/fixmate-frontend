@@ -125,6 +125,9 @@ Create `.env.local` from `.env.local.example`:
 > `BETTER_AUTH_URL` must be identical in the frontend and backend. The backend
 > verifies the JWT issuer/audience against it.
 
+> If `IMGBB_API_KEY` is missing or rejected, the add-service form still works:
+> paste a direct image URL instead of uploading a file.
+
 ### Google OAuth setup (optional)
 
 1. Create an OAuth 2.0 Client ID (Web application) in Google Cloud Console.
