@@ -1,6 +1,8 @@
 
 import Link from "next/link";
 
+import FeaturedServices from "@/components/FeaturedServices";
+
 const categories = [
   { name: "Smartphone", icon: "📱", description: "Mobile repair services" },
   { name: "Laptop & PC", icon: "💻", description: "Computer repair services" },
@@ -240,29 +242,7 @@ export default function HomePage() {
 
           </div>
 
-          <div className="mt-10 rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-16 text-center">
-
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-100 text-4xl">
-              🔧
-            </div>
-
-            <h3 className="mt-6 text-xl font-bold text-slate-900">
-              Services Coming Soon
-            </h3>
-
-            <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-slate-500">
-              Our latest approved repair services will appear here.
-              Check back soon to discover available technicians.
-            </p>
-
-            <Link
-              href="/services"
-              className="mt-6 inline-flex rounded-xl bg-blue-700 px-6 py-3 font-semibold text-white hover:bg-blue-800"
-            >
-              Explore Services
-            </Link>
-
-          </div>
+          <FeaturedServices />
 
         </div>
 
