@@ -16,16 +16,21 @@ const database = client.db(dbName);
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
+// Keep issuer, audience, trusted origin and Express verification in sync.
+const authBaseUrl = (
+  process.env.BETTER_AUTH_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
+
 // BetterAuth Configuration
 export const auth = betterAuth({
   appName: "FixMate",
 
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: authBaseUrl,
 
   secret: process.env.BETTER_AUTH_SECRET,
 
   trustedOrigins: [
-    "http://localhost:3000",
+    authBaseUrl,
   ],
 
   database: mongodbAdapter(database),
@@ -140,6 +145,11 @@ export const auth = betterAuth({
 
   // BetterAuth Plugins
   plugins: [
-    jwt(),
+    jwt({
+      jwt: {
+        issuer: authBaseUrl,
+        audience: authBaseUrl,
+      },
+    }),
   ],
 });
