@@ -51,3 +51,6 @@ CLAUDE.md
 GEMINI.md
 .cursorrules
 .cursor/rules/
+
+.vercel
+.env*

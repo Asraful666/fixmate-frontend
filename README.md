@@ -8,13 +8,23 @@ manage users and review bookings and Stripe transactions.
 
 ## Live Site
 
-- Frontend: `https://fixmate-frontend.vercel.app` **(replace with your deployed URL)**
-- Backend API: `https://fixmate-api.onrender.com/api` **(replace with your deployed URL)**
+- Frontend: https://fixmate-frontend-blond.vercel.app
+- Backend API: https://fixmate-backend-taupe.vercel.app/api
+- Health check: https://fixmate-backend-taupe.vercel.app/api/health
 - Local frontend: `http://localhost:3000`
 - Local API: `http://localhost:5000`
 
-> The live URL above is a placeholder. Deploy both apps and replace it before
-> submitting the assignment. The code is already pushed to GitHub.
+> Both apps are deployed on Vercel. The Express API runs as a serverless
+> function (`fixmate-backend/api/index.js` + `vercel.json`) and connects to the
+> same MongoDB database as the frontend.
+>
+> Before the demo, add
+> `https://fixmate-frontend-blond.vercel.app/api/auth/callback/google` to the
+> Google OAuth client's authorized redirect URIs, or Google sign-in will stop
+> with `redirect_uri_mismatch`.
+>
+> `IMGBB_API_KEY` and the Stripe keys must be valid in the Vercel project
+> settings for image uploads and online payment to work in the live demo.
 
 ## Repositories
 
@@ -204,16 +214,18 @@ with plain image tags; `next.config.mjs` does not define `images.remotePatterns`
 
 ## Production Deployment Checklist
 
-- [ ] Deploy the Express API first and confirm `/api/health`.
-- [ ] Create `.env.local` on Vercel/host with every variable above.
-- [ ] Set `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` to the deployed domain.
-- [ ] Set `NEXT_PUBLIC_API_URL` to `https://<api-host>/api`.
-- [ ] Set the backend `CLIENT_URL` to this frontend domain for CORS and Stripe
+- [x] Deploy the Express API first and confirm `/api/health`.
+- [x] Add every variable above to the Vercel project (production environment).
+- [x] Set `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL` to the deployed domain.
+- [x] Set `NEXT_PUBLIC_API_URL` to `https://fixmate-backend-taupe.vercel.app/api`.
+- [x] Set the backend `CLIENT_URL` to this frontend domain for CORS and Stripe
       redirects.
-- [ ] Add the production domain to BetterAuth `trustedOrigins` via
+- [x] Add the production domain to BetterAuth `trustedOrigins` via
       `BETTER_AUTH_URL`.
+- [ ] Add the production redirect URI in the Google Cloud console (Google login).
 - [ ] Add the Stripe webhook in the Stripe dashboard and set
       `STRIPE_WEBHOOK_SECRET` on the backend.
+- [ ] Replace `IMGBB_API_KEY` with a valid key so image uploads work.
 - [ ] Keep Stripe in test mode for the assignment demo.
 - [ ] Verify sign-up, sign-in, Google (if configured), booking, status updates
       and a test payment end to end.
