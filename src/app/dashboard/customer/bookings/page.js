@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import ConfirmModal from "@/components/dashboard/ConfirmModal";
 import EmptyState from "@/components/dashboard/EmptyState";
 import StatusBadge from "@/components/dashboard/StatusBadge";
+import RatingStars from "@/components/RatingStars";
 import { apiFetch } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { downloadInvoice } from "@/lib/invoice";
 import { BOOKING_STATUS_ORDER } from "@/lib/constants";
 import { statusLabels } from "@/lib/format";
 
@@ -27,14 +29,29 @@ export default function CustomerBookingsPage() {
   const [filter, setFilter] = useState("all");
   const [actionId, setActionId] = useState("");
   const [cancelTarget, setCancelTarget] = useState(null);
+  const [payments, setPayments] = useState(new Map());
+  const [reviewTarget, setReviewTarget] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
 
   const loadBookings = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      const result = await apiFetch("/bookings/my");
-      setBookings(result.bookings || []);
+      const [bookingResult, paymentResult] = await Promise.all([
+        apiFetch("/bookings/my"),
+        apiFetch("/payments/my").catch(() => ({ payments: [] })),
+      ]);
+
+      setBookings(bookingResult.bookings || []);
+
+      const map = new Map();
+      for (const payment of paymentResult.payments || []) {
+        if (payment.bookingId) map.set(payment.bookingId, payment);
+      }
+      setPayments(map);
     } catch (err) {
       setError(err.message || "Unable to load your bookings.");
     } finally {
@@ -93,6 +110,29 @@ export default function CustomerBookingsPage() {
     } catch (err) {
       toast.error(err.message || "Unable to start the payment.");
       setActionId("");
+    }
+  };
+
+  const submitReview = async () => {
+    if (!reviewTarget) return;
+
+    try {
+      setReviewBusy(true);
+
+      await apiFetch(`/bookings/${reviewTarget._id}/review`, {
+        method: "PATCH",
+        body: { rating: reviewRating, review: reviewText.trim() },
+      });
+
+      toast.success("Thanks for your review!");
+      setReviewTarget(null);
+      setReviewRating(5);
+      setReviewText("");
+      await loadBookings();
+    } catch (err) {
+      toast.error(err.message || "Unable to save the review.");
+    } finally {
+      setReviewBusy(false);
     }
   };
 
@@ -232,6 +272,8 @@ export default function CustomerBookingsPage() {
                         </p>
                       )}
 
+                    <BookingTimeline booking={booking} />
+
                     <Link
                       href={`/services/${booking.serviceId}`}
                       className="mt-2 inline-block text-xs font-bold text-blue-700 hover:underline"
@@ -287,6 +329,49 @@ export default function CustomerBookingsPage() {
                       ✓ Payment complete
                     </span>
                   )}
+
+                  {booking.paymentStatus === "paid" && (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          downloadInvoice({
+                            booking,
+                            payment: payments.get(booking._id) || {},
+                          })
+                        }
+                        className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        ⬇ Invoice
+                      </button>
+
+                      {!booking.rating && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReviewTarget(booking);
+                            setReviewRating(5);
+                            setReviewText("");
+                          }}
+                          className="rounded-lg bg-amber-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-600"
+                        >
+                          ★ Rate Service
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {booking.rating && (
+                    <div className="rounded-lg bg-amber-50 px-3 py-2 text-right">
+                      <RatingStars rating={booking.rating} />
+
+                      {booking.review && (
+                        <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">
+                          {booking.review}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </article>
@@ -308,6 +393,145 @@ export default function CustomerBookingsPage() {
         onConfirm={cancelBooking}
         onCancel={() => setCancelTarget(null)}
       />
+
+      <ConfirmModal
+        open={Boolean(reviewTarget)}
+        title="Rate this repair"
+        message={
+          reviewTarget
+            ? `How was “${reviewTarget.serviceTitle}” by ${reviewTarget.technicianName || "the technician"}?`
+            : ""
+        }
+        confirmLabel={reviewBusy ? "Saving..." : "Submit Review"}
+        cancelLabel="Cancel"
+        tone="primary"
+        busy={reviewBusy}
+        onConfirm={submitReview}
+        onCancel={() => setReviewTarget(null)}
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="mb-2 text-sm font-semibold text-slate-700">
+              Your rating
+            </p>
+
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setReviewRating(value)}
+                  aria-label={`${value} star`}
+                  className={`text-3xl transition ${
+                    value <= reviewRating
+                      ? "text-amber-500"
+                      : "text-slate-300 hover:text-amber-400"
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">
+              Review (optional)
+            </span>
+            <textarea
+              value={reviewText}
+              onChange={(event) => setReviewText(event.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Tell other customers how the repair went."
+              className="input-base resize-y"
+            />
+          </label>
+        </div>
+      </ConfirmModal>
+    </div>
+  );
+}
+
+const timelineSteps = [
+  { status: "requested", label: "Requested", icon: "📩" },
+  { status: "accepted", label: "Accepted", icon: "🤝" },
+  { status: "in-progress", label: "In Progress", icon: "🛠️" },
+  { status: "completed", label: "Completed", icon: "✅" },
+  { status: "paid", label: "Paid", icon: "💳" },
+];
+
+function BookingTimeline({ booking }) {
+  const history = Array.isArray(booking.statusHistory)
+    ? booking.statusHistory
+    : [];
+
+  const changedAt = (status) =>
+    history.find((entry) => entry.status === status)?.changedAt || null;
+
+  const stopped = ["rejected", "cancelled"].includes(booking.status);
+
+  if (stopped) {
+    const lastChange = history[history.length - 1];
+
+    return (
+      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+        {statusLabels[booking.status] || booking.status}
+        {lastChange?.changedAt
+          ? ` · ${formatDate(lastChange.changedAt)}`
+          : ""}
+        {booking.rejectionReason ? ` — ${booking.rejectionReason}` : ""}
+      </div>
+    );
+  }
+
+  const reachedIndex = timelineSteps.findIndex(
+    (step) =>
+      step.status === "paid"
+        ? booking.paymentStatus === "paid"
+        : step.status === booking.status
+  );
+
+  const activeIndex = reachedIndex === -1 ? 0 : reachedIndex;
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-1.5">
+      {timelineSteps.map((step, index) => {
+        const done = index <= activeIndex;
+        const isPaidStep = step.status === "paid";
+        const doneForReal = isPaidStep
+          ? booking.paymentStatus === "paid"
+          : done;
+
+        return (
+          <div key={step.status} className="flex items-center gap-1.5">
+            <span
+              title={
+                changedAt(step.status)
+                  ? `${step.label} · ${formatDate(changedAt(step.status))}`
+                  : step.label
+              }
+              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                doneForReal
+                  ? "border-blue-200 bg-blue-50 text-blue-700"
+                  : "border-slate-200 bg-white text-slate-400"
+              }`}
+            >
+              <span aria-hidden="true">{step.icon}</span>
+              {step.label}
+            </span>
+
+            {index < timelineSteps.length - 1 && (
+              <span
+                aria-hidden="true"
+                className={`h-px w-3 ${
+                  index < activeIndex ? "bg-blue-300" : "bg-slate-200"
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -18,9 +18,11 @@ export default function PaymentSuccessPage() {
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const isSubscription = searchParams.get("type") === "subscription";
 
   const [booking, setBooking] = useState(null);
   const [payment, setPayment] = useState(null);
+  const [plan, setPlan] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -38,6 +40,7 @@ function PaymentSuccessContent() {
         if (!cancelled) {
           setBooking(result.booking || null);
           setPayment(result.payment || null);
+          setPlan(result.plan || "");
         }
       } catch (err) {
         if (!cancelled) {
@@ -96,12 +99,31 @@ function PaymentSuccessContent() {
               ✓
             </div>
             <h1 className="mt-5 text-3xl font-extrabold text-slate-900">
-              Payment successful
+              {isSubscription ? "FixMate Pro activated" : "Payment successful"}
             </h1>
             <p className="mt-3 text-sm leading-7 text-slate-500">
-              Thank you! Your payment has been recorded for this completed
-              repair.
+              {isSubscription
+                ? "Unlimited service listings and the Verified Pro badge are now active on your technician account."
+                : "Thank you! Your payment has been recorded for this completed repair."}
             </p>
+
+            {isSubscription && (
+              <div className="mt-7 rounded-2xl bg-amber-50 p-5 text-left">
+                <p className="text-xs font-bold uppercase tracking-wider text-amber-700">
+                  Current plan
+                </p>
+                <p className="mt-1 text-xl font-extrabold text-slate-900">
+                  ⭐ {plan === "pro" ? "FixMate Pro" : "Pro"}
+                </p>
+
+                {payment?.amount != null && (
+                  <p className="mt-2 text-sm text-slate-600">
+                    {formatCurrency(payment.amount)} charged ·{" "}
+                    {payment.paidAt ? formatDate(payment.paidAt) : "Paid"}
+                  </p>
+                )}
+              </div>
+            )}
 
             {booking && (
               <div className="mt-7 rounded-2xl bg-slate-50 p-5 text-left">
@@ -150,16 +172,20 @@ function PaymentSuccessContent() {
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/dashboard/customer/bookings"
+                href={
+                  isSubscription
+                    ? "/dashboard/technician"
+                    : "/dashboard/customer/bookings"
+                }
                 className="flex-1 rounded-xl bg-blue-700 px-5 py-3 font-bold text-white hover:bg-blue-800"
               >
-                My Bookings
+                {isSubscription ? "Technician Dashboard" : "My Bookings"}
               </Link>
               <Link
-                href="/services"
+                href={isSubscription ? "/dashboard/technician/my-services" : "/services"}
                 className="flex-1 rounded-xl border border-slate-300 px-5 py-3 font-bold text-slate-700 hover:bg-slate-50"
               >
-                Browse Services
+                {isSubscription ? "My Services" : "Browse Services"}
               </Link>
             </div>
           </div>

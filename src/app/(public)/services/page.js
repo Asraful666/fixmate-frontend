@@ -7,6 +7,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { API_BASE_URL } from "@/lib/api";
 import { CATEGORIES } from "@/lib/constants";
+import ProBadge from "@/components/ProBadge";
+import RatingStars from "@/components/RatingStars";
 
 const API_URL = `${API_BASE_URL}/services`;
 
@@ -30,6 +32,11 @@ function ServicesContent() {
     searchParams.get("serviceMode") || ""
   );
   const [sort, setSort] = useState(searchParams.get("sort") || "newest");
+  const [page, setPage] = useState(() => {
+    const parsed = Number.parseInt(searchParams.get("page") || "1", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  });
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1, limit: 9 });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -50,6 +57,8 @@ function ServicesContent() {
         if (serviceMode) params.set("serviceMode", serviceMode);
 
         params.set("sort", sort);
+        params.set("page", String(page));
+        params.set("limit", "9");
 
         const response = await fetch(
           `${API_URL}?${params.toString()}`,
@@ -69,6 +78,11 @@ function ServicesContent() {
         }
 
         setServices(result.services || []);
+        setMeta({
+          total: result.total || 0,
+          totalPages: result.totalPages || 1,
+          limit: result.limit || 9,
+        });
       } catch (err) {
         if (err.name !== "AbortError") {
           console.error("Services fetch error:", err);
@@ -87,7 +101,13 @@ function ServicesContent() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [search, category, serviceMode, sort, reloadKey]);
+  }, [search, category, serviceMode, sort, page, reloadKey]);
+
+  // Any filter change starts again from the first page.
+  const changeFilter = (setter) => (value) => {
+    setPage(1);
+    setter(value);
+  };
 
   // Keep the browser URL shareable, e.g. /services?category=AC
   useEffect(() => {
@@ -97,19 +117,21 @@ function ServicesContent() {
     if (category) params.set("category", category);
     if (serviceMode) params.set("serviceMode", serviceMode);
     if (sort !== "newest") params.set("sort", sort);
+    if (page > 1) params.set("page", String(page));
 
     const query = params.toString();
 
     router.replace(query ? `/services?${query}` : "/services", {
       scroll: false,
     });
-  }, [search, category, serviceMode, sort, router]);
+  }, [search, category, serviceMode, sort, page, router]);
 
   const resetFilters = () => {
     setSearch("");
     setCategory("");
     setServiceMode("");
     setSort("newest");
+    setPage(1);
   };
 
   return (
@@ -146,14 +168,14 @@ function ServicesContent() {
               <input
                 type="search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => changeFilter(setSearch)(e.target.value)}
                 placeholder="Search repair services..."
                 className="min-w-0 flex-1 bg-transparent px-2 py-3 text-sm text-slate-800 outline-none sm:text-base"
               />
 
               {search && (
                 <button
-                  onClick={() => setSearch("")}
+                  onClick={() => changeFilter(setSearch)("")}
                   className="px-3 text-sm font-semibold text-blue-700"
                 >
                   Clear
@@ -206,7 +228,7 @@ function ServicesContent() {
 
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => changeFilter(setCategory)(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-600"
               >
                 <option value="">All Categories</option>
@@ -227,7 +249,7 @@ function ServicesContent() {
 
               <select
                 value={serviceMode}
-                onChange={(e) => setServiceMode(e.target.value)}
+                onChange={(e) => changeFilter(setServiceMode)(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-600"
               >
                 <option value="">All Service Modes</option>
@@ -243,7 +265,7 @@ function ServicesContent() {
 
               <select
                 value={sort}
-                onChange={(e) => setSort(e.target.value)}
+                onChange={(e) => changeFilter(setSort)(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-600"
               >
                 <option value="newest">Newest First</option>
@@ -378,6 +400,13 @@ function ServicesContent() {
 
                     </div>
 
+                    <div className="mt-2">
+                      <RatingStars
+                        rating={service.rating}
+                        reviewCount={service.reviewCount}
+                      />
+                    </div>
+
                     <p className="mt-3 line-clamp-2 min-h-12 text-sm leading-6 text-slate-500">
                       {service.description}
                     </p>
@@ -397,6 +426,10 @@ function ServicesContent() {
                         <p className="text-sm font-bold text-slate-800">
                           {service.technicianName || "Professional Technician"}
                         </p>
+
+                        {service.technicianPlan === "pro" && (
+                          <ProBadge className="mt-1" />
+                        )}
                       </div>
 
                     </div>
@@ -472,6 +505,55 @@ function ServicesContent() {
 
             </div>
 
+          )}
+
+          {/* SERVER-SIDE PAGINATION */}
+          {!loading && !error && meta.total > 0 && meta.totalPages > 1 && (
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+
+              <button
+                type="button"
+                onClick={() => setPage((value) => Math.max(value - 1, 1))}
+                disabled={page <= 1}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                ← Previous
+              </button>
+
+              {Array.from({ length: meta.totalPages }, (_, index) => index + 1).map(
+                (number) => (
+                  <button
+                    key={number}
+                    type="button"
+                    onClick={() => setPage(number)}
+                    aria-current={page === number ? "page" : undefined}
+                    className={`h-10 w-10 rounded-lg text-sm font-bold transition ${
+                      page === number
+                        ? "bg-blue-700 text-white"
+                        : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    {number}
+                  </button>
+                )
+              )}
+
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((value) => Math.min(value + 1, meta.totalPages))
+                }
+                disabled={page >= meta.totalPages}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next →
+              </button>
+
+              <span className="ml-2 text-xs font-semibold text-slate-500">
+                Page {page} of {meta.totalPages} · {meta.total} services
+              </span>
+
+            </div>
           )}
 
         </div>

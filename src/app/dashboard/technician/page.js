@@ -26,19 +26,42 @@ export default function TechnicianDashboardPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [plan, setPlan] = useState("free");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const startUpgrade = async () => {
+    try {
+      setSubscribing(true);
+
+      const result = await apiFetch("/payments/subscribe", {
+        method: "POST",
+      });
+
+      if (!result.url) {
+        throw new Error("Stripe checkout URL was not returned.");
+      }
+
+      window.location.assign(result.url);
+    } catch (err) {
+      toast.error(err.message || "Unable to start the Pro upgrade.");
+      setSubscribing(false);
+    }
+  };
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      const [serviceResult, bookingResult] = await Promise.all([
+      const [serviceResult, bookingResult, profileResult] = await Promise.all([
         apiFetch("/services/mine"),
         apiFetch("/bookings/technician"),
+        apiFetch("/users/me").catch(() => ({ user: null })),
       ]);
 
       setServices(serviceResult.services || []);
       setBookings(bookingResult.bookings || []);
+      setPlan(profileResult.user?.plan || "free");
     } catch (err) {
       setError(err.message || "Unable to load your dashboard.");
     } finally {
@@ -90,6 +113,46 @@ export default function TechnicianDashboardPage() {
           Add repair services, manage availability and move every customer job
           through requested, accepted, in-progress and completed.
         </p>
+      </section>
+
+      <section
+        className={`flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between ${
+          plan === "pro"
+            ? "border-amber-200 bg-amber-50"
+            : "border-slate-200 bg-white"
+        }`}
+      >
+        <div>
+          <p className="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-900">
+            {plan === "pro" ? "⭐ FixMate Pro" : "Free plan"}
+            {plan === "pro" && (
+              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                Verified Pro
+              </span>
+            )}
+          </p>
+
+          <p className="mt-1 text-sm text-slate-500">
+            {plan === "pro"
+              ? "Unlimited service listings and a Verified Pro badge on every service card."
+              : `${services.length}/3 free listings used. Upgrade for unlimited listings and a Verified Pro badge.`}
+          </p>
+        </div>
+
+        {plan === "pro" ? (
+          <span className="shrink-0 rounded-xl bg-white px-4 py-2 text-xs font-bold text-amber-700">
+            Active subscription
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={startUpgrade}
+            disabled={subscribing}
+            className="shrink-0 rounded-xl bg-amber-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-amber-600 disabled:opacity-50"
+          >
+            {subscribing ? "Opening Stripe..." : "Upgrade to Pro"}
+          </button>
+        )}
       </section>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">

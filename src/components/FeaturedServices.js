@@ -5,6 +5,8 @@ import Link from "next/link";
 
 import { API_BASE_URL } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
+import ProBadge from "@/components/ProBadge";
+import RatingStars from "@/components/RatingStars";
 
 export default function FeaturedServices() {
   const [services, setServices] = useState([]);
@@ -19,7 +21,7 @@ export default function FeaturedServices() {
         setLoading(true);
 
         const response = await fetch(
-          `${API_BASE_URL}/services?sort=newest`,
+          `${API_BASE_URL}/services?sort=newest&limit=6`,
           { cache: "no-store", signal: controller.signal }
         );
         const result = await response.json();
@@ -119,15 +121,25 @@ export default function FeaturedServices() {
               {service.title}
             </h3>
 
+            <div className="mt-1.5">
+              <RatingStars
+                rating={service.rating}
+                reviewCount={service.reviewCount}
+              />
+            </div>
+
             <p className="mt-2 line-clamp-2 min-h-10 text-sm leading-6 text-slate-500">
               {service.description}
             </p>
 
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
               Technician:{" "}
               <span className="font-semibold text-slate-700">
                 {service.technicianName || "FixMate Pro"}
               </span>
+              {service.technicianPlan === "pro" && (
+                <ProBadge className="px-2 py-0.5" />
+              )}
             </p>
 
             <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">

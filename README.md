@@ -33,24 +33,32 @@ Other seeded accounts (same password): `customer@fixmate.test` (customer),
 ## Key Features
 
 - BetterAuth email/password auth with customer / technician roles, JWT bridge
-  to Express, Google login option, and role-protected dashboard routes.
+  to Express, Google login (a Google user becomes a `customer` by default), and
+  role-protected dashboard routes.
 - Landing page with 6 latest approved services, 4-step "How FixMate Works",
   popular categories and trust points.
-- Browse services with server-side search, category/mode filters and sorting,
-  all persisted in the URL.
-- Service details with technician profile and a role-restricted repair request
-  form (read-only name/email, phone, address, preferred date, 20+ character
-  problem description, duplicate-request protection).
+- Browse services with server-side search, category/mode filters, sorting and
+  **server-side pagination** (Previous / page numbers / Next), all persisted in
+  the URL. Cards show the average star rating and a **Verified Pro** badge.
+- Service details with technician profile, review average and the latest
+  customer reviews, plus a role-restricted repair request form (read-only
+  name/email, phone, address, preferred date, 20+ character problem
+  description, duplicate-request protection).
 - Customer dashboard: overview stats and chart, My Bookings with cancel
-  confirmation (requested only) and Stripe Pay Now (completed + unpaid),
-  payment history.
-- Technician dashboard: overview stats and chart, add service with ImgBB image
-  upload, full service CRUD with availability toggle, request pipeline
-  (Accept / Reject / Start Work / Mark Completed with final amount modal).
+  confirmation (requested only), a visual job timeline
+  Requested → Accepted → In Progress → Completed → Paid, Stripe Pay Now
+  (completed + unpaid), star review after payment and a **PDF invoice**
+  download for paid jobs, plus payment history with invoices.
+- Technician dashboard: overview stats and chart, **Free / Pro plan card**
+  (free = 3 listings, Pro = unlimited + Verified Pro badge via Stripe), add
+  service with ImgBB image upload, full service CRUD with availability toggle,
+  request pipeline (Accept / Reject / Start Work / Mark Completed).
 - Admin dashboard: overview stats and charts, user role management, service
   approval, read-only bookings, transactions with total revenue.
 - Shared profile page with photo upload; name/photo update in the top bar
   without re-login.
+- **Dark / light theme toggle** on public pages and dashboards, saved in
+  `localStorage` and applied before first paint.
 - Stripe Checkout in test mode with idempotent payment recording and a verified
   webhook. Payment is gated to completed, unpaid bookings.
 - Responsive dashboard with collapsible sidebar, top bar avatar/name/role,
@@ -62,6 +70,7 @@ Other seeded accounts (same password): `customer@fixmate.test` (customer),
 - `next`, `react`, `react-dom`
 - `better-auth`, `@better-auth/mongo-adapter`, `mongodb`, `jose`
 - `sonner` (toasts)
+- `jspdf` (PDF invoice download)
 - `tailwindcss`, `@tailwindcss/turbopack` (styling)
 - `eslint`, `eslint-config-next` (linting)
 
@@ -71,6 +80,7 @@ Other seeded accounts (same password): `customer@fixmate.test` (customer),
 - Tailwind CSS v4
 - BetterAuth React client + JWT plugin
 - Sonner toasts
+- jsPDF invoices
 - Express API at `http://localhost:5000/api`
 - Stripe Checkout (test mode)
 - ImgBB for avatar and service images
@@ -115,20 +125,31 @@ Create `.env.local` from `.env.local.example`:
 > `BETTER_AUTH_URL` must be identical in the frontend and backend. The backend
 > verifies the JWT issuer/audience against it.
 
+### Google OAuth setup (optional)
+
+1. Create an OAuth 2.0 Client ID (Web application) in Google Cloud Console.
+2. Add `http://localhost:3000/api/auth/callback/google` as an Authorized
+   redirect URI (and the deployed `https://<domain>/api/auth/callback/google`
+   for production).
+3. Put the client ID/secret in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`
+   and restart `npm run dev`.
+4. "Continue with Google" on `/sign-in` and `/sign-up` then works; Google users
+   are created with the `customer` role and `free` plan.
+
 ## Pages
 
 | Route | Description |
 |---|---|
 | `/` | Landing page with 6 latest approved services and how-it-works sections |
-| `/services` | Server-side search, category/mode filters and sorting; filters sync to the URL |
-| `/services/[id]` | Service details, technician profile, repair request form |
+| `/services` | Server-side search, filters, sorting and pagination; filters sync to the URL |
+| `/services/[id]` | Service details, rating summary, reviews, technician profile, repair request form |
 | `/about` | How FixMate works |
 | `/sign-in`, `/sign-up` | BetterAuth email/password and Google entry points (logged-in users redirect to their dashboard) |
 | `/dashboard` | Redirects to the dashboard for the signed-in role |
 | `/dashboard/customer` | Overview stats, chart and recent requests |
-| `/dashboard/customer/bookings` | My Bookings: cancel requested jobs, pay completed jobs |
-| `/dashboard/customer/payments` | Payment history (service, technician, amount, transaction, date) |
-| `/dashboard/technician` | Overview stats, chart and latest requests |
+| `/dashboard/customer/bookings` | My Bookings: job timeline, cancel requested jobs, pay, review paid jobs, PDF invoice |
+| `/dashboard/customer/payments` | Payment history with a PDF invoice button |
+| `/dashboard/technician` | Overview stats, chart, Free/Pro plan card and latest requests |
 | `/dashboard/technician/add-service` | Validated add-service form with ImgBB upload |
 | `/dashboard/technician/my-services` | Service CRUD, approval badges and availability toggle |
 | `/dashboard/technician/requests` | Request pipeline with Accept / Reject / Start / Complete |
@@ -145,12 +166,12 @@ Create `.env.local` from `.env.local.example`:
 
 Run `npm run seed` in the backend first. All demo accounts use `Demo@1234`.
 
-| Email | Role |
-|---|---|
-| `admin@fixmate.test` | admin |
-| `customer@fixmate.test` | customer |
-| `rahim@fixmate.test` | technician |
-| `karim@fixmate.test` | technician |
+| Email | Role | Plan |
+|---|---|---|
+| `admin@fixmate.test` | admin | free |
+| `customer@fixmate.test` | customer | free |
+| `rahim@fixmate.test` | technician | pro |
+| `karim@fixmate.test` | technician | free |
 
 ## Authentication Flow
 

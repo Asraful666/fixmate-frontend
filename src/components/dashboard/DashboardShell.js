@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { signOut } from "@/lib/auth-client";
 import { dashboardForRole } from "@/lib/format";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const roleDetails = {
   customer: {
@@ -229,14 +230,18 @@ export default function DashboardShell({ user, children }) {
                 </span>
               </Link>
 
-              <button
-                type="button"
-                onClick={() => setMobileOpen(false)}
-                aria-label="Close menu"
-                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+
+                <button
+                  type="button"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Close menu"
+                  className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="p-4">{userCard(false)}</div>
@@ -359,6 +364,8 @@ export default function DashboardShell({ user, children }) {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
+
               <Link
                 href="/"
                 className="hidden rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 sm:block"

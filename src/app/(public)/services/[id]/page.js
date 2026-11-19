@@ -8,6 +8,9 @@ import { toast } from "sonner";
 
 import { API_BASE_URL, apiFetch } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import ProBadge from "@/components/ProBadge";
+import RatingStars from "@/components/RatingStars";
+import { formatDate } from "@/lib/format";
 
 const API_URL = `${API_BASE_URL}/services`;
 
@@ -26,6 +29,8 @@ export default function ServiceDetailsPage() {
 
   const [service, setService] = useState(null);
   const [technician, setTechnician] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [reviewAverage, setReviewAverage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -85,6 +90,37 @@ export default function ServiceDetailsPage() {
     fetchDetails();
 
     return () => controller.abort();
+  }, [id]);
+
+  // Public reviews power the average rating on the details page.
+  useEffect(() => {
+    if (!id) return undefined;
+
+    let cancelled = false;
+
+    const loadReviews = async () => {
+      try {
+        const response = await fetch(
+          `${API_URL}/${encodeURIComponent(id)}/reviews`,
+          { cache: "no-store" }
+        );
+        const result = await response.json();
+
+        if (!cancelled && response.ok && result.success) {
+          setReviews(result.reviews || []);
+          setReviewAverage(result.average || 0);
+        }
+      } catch {
+        // The page still renders without reviews.
+      }
+    };
+
+    const timer = setTimeout(loadReviews, 0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [id]);
 
   // Prefill the booking form with the signed-in customer details.
@@ -268,6 +304,13 @@ export default function ServiceDetailsPage() {
                 About This Service
               </h2>
 
+              <div className="mt-3">
+                <RatingStars
+                  rating={service.rating ?? reviewAverage}
+                  reviewCount={service.reviewCount ?? reviews.length}
+                />
+              </div>
+
               <p className="mt-5 leading-8 text-slate-600">
                 {service.description}
               </p>
@@ -337,6 +380,11 @@ export default function ServiceDetailsPage() {
                     {service.technicianName || "Professional Technician"}
                   </h3>
 
+                  {(technician?.plan === "pro" ||
+                    service.technicianPlan === "pro") && (
+                    <ProBadge className="mt-2" />
+                  )}
+
                   <p className="mt-1 text-sm text-slate-500">
                     FixMate Service Technician
                   </p>
@@ -353,6 +401,56 @@ export default function ServiceDetailsPage() {
                 </div>
 
               </div>
+
+            </div>
+
+            {/* REVIEWS */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-7">
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Customer Reviews
+                </h2>
+
+                <RatingStars
+                  rating={reviewAverage}
+                  reviewCount={reviews.length}
+                />
+              </div>
+
+              {reviews.length === 0 ? (
+                <p className="mt-5 rounded-xl border border-dashed border-slate-200 py-10 text-center text-sm text-slate-400">
+                  No reviews yet. Reviews appear after a customer pays for a
+                  completed job.
+                </p>
+              ) : (
+                <div className="mt-5 space-y-4">
+                  {reviews.map((review) => (
+                    <article
+                      key={review._id}
+                      className="rounded-xl border border-slate-100 p-4"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-semibold text-slate-800">
+                          {review.customerName || "FixMate customer"}
+                        </p>
+
+                        <RatingStars rating={review.rating} />
+                      </div>
+
+                      {review.review && (
+                        <p className="mt-2 text-sm leading-7 text-slate-600">
+                          {review.review}
+                        </p>
+                      )}
+
+                      <p className="mt-2 text-xs text-slate-400">
+                        {formatDate(review.reviewedAt)}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              )}
 
             </div>
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient, signOut, useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -103,6 +104,8 @@ export default function Navbar() {
 
         {/* DESKTOP AUTHENTICATION */}
         <div className="hidden items-center gap-3 md:flex">
+
+          <ThemeToggle />
 
           {isPending ? (
             <div className="h-10 w-24 animate-pulse rounded-lg bg-slate-100" />
@@ -226,6 +229,10 @@ export default function Navbar() {
         <div className="border-t border-slate-200 bg-white px-5 py-5 shadow-lg md:hidden">
 
           <div className="flex flex-col gap-2">
+
+            <div className="flex justify-end">
+              <ThemeToggle />
+            </div>
 
             {navigation.map((item) => (
               <Link

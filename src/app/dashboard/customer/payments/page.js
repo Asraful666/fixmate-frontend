@@ -7,6 +7,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import StatusBadge from "@/components/dashboard/StatusBadge";
 import { apiFetch } from "@/lib/api";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { downloadInvoice } from "@/lib/invoice";
 
 export default function CustomerPaymentsPage() {
   const [payments, setPayments] = useState([]);
@@ -108,6 +109,7 @@ export default function CustomerPaymentsPage() {
                 <th className="px-5 py-3">Transaction ID</th>
                 <th className="px-5 py-3">Paid At</th>
                 <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Invoice</th>
               </tr>
             </thead>
             <tbody>
@@ -133,6 +135,19 @@ export default function CustomerPaymentsPage() {
                   </td>
                   <td className="px-5 py-4">
                     <StatusBadge status={payment.paymentStatus} />
+                  </td>
+                  <td className="px-5 py-4">
+                    {payment.paymentStatus === "paid" ? (
+                      <button
+                        type="button"
+                        onClick={() => downloadInvoice({ payment })}
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+                      >
+                        ⬇ PDF
+                      </button>
+                    ) : (
+                      <span className="text-xs text-slate-400">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

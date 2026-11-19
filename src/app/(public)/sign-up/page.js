@@ -208,10 +208,14 @@ export default function SignUpPage() {
     try {
       setLoading(true);
 
-      await authClient.signIn.social({
+      const { error } = await authClient.signIn.social({
         provider: "google",
         callbackURL: "/dashboard/customer",
       });
+
+      if (error) {
+        throw new Error(error.message || "Google login failed.");
+      }
 
     } catch (error) {
       console.error("Google Login Error:", error);
