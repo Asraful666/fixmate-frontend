@@ -238,3 +238,10 @@ with plain image tags; `next.config.mjs` does not define `images.remotePatterns`
 | `npm run build` | Production build |
 | `npm start` | Start production server |
 | `npm run lint` | ESLint |
+
+
+## Author
+
+**Md Asraful Islam**
+
+GitHub: https://github.com/Asraful666
